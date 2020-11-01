@@ -17,8 +17,6 @@ class Page extends Component {
       imageURLs: children.map((child) => child.props.imageURL),
       images: [],
     };
-
-    console.log(this.state.imageURLs);
   }
 
   componentDidMount() {
@@ -32,6 +30,33 @@ class Page extends Component {
         {this.props.children}
       </div>
     );
+  }
+
+  /**
+   * Utility function to load the required background images
+   * and provide a Promise-based syntax for better management
+   */
+  loadImages() {
+    let promises = [];
+
+    this.state.imageURLs.forEach((url, index) => {
+      promises.push(
+        new Promise((resolve, reject) => {
+          new THREE.TextureLoader().load(url, (image) => {
+            this.setState(
+              {
+                images: [...this.state.images, image],
+              },
+              resolve
+            );
+          });
+        })
+      );
+    });
+
+    return new Promise((resolve, reject) => {
+      Promise.all(promises).then(resolve);
+    });
   }
 
   renderBackground() {
