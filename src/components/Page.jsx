@@ -7,11 +7,18 @@ import { morphFragmentShader } from "../util/fragmentShaders";
 import "./styles/Page.css";
 
 class Page extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+    const children = this.props.children;
+
     this.state = {
-      u_input: 0,
+      viewUpdated: false,
+      currentView: 0,
+      imageURLs: children.map((child) => child.props.imageURL),
+      images: [],
     };
+
+    console.log(this.state.imageURLs);
   }
 
   componentDidMount() {
@@ -22,6 +29,7 @@ class Page extends Component {
     return (
       <div className="page">
         <div className="background-container"></div>
+        {this.props.children}
       </div>
     );
   }
