@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import * as THREE from "three";
 
 import { defaultVertexShader } from "../util/vertexShaders";
-import { morphFragmentShader } from "../util/fragmentShaders";
 import { slideFragmentShader } from "../util/fragmentShaders";
 
 import "./styles/Page.css";
