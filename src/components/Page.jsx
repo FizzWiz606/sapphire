@@ -45,7 +45,6 @@ class Page extends Component {
 
   componentDidUpdate() {
     this.renderBackground();
-    console.log(this.state.currentView);
   }
 
   render() {
@@ -192,7 +191,6 @@ class Page extends Component {
       let animationFrame = requestAnimationFrame(renderLoop);
       let progress = mesh.material.uniforms.u_progress.value;
       if (progress > 1) {
-        console.log(progress);
         this.clicked = false;
         cancelAnimationFrame(animationFrame);
         this.setState({ currentView: currentView + 1 });
