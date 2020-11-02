@@ -3,6 +3,7 @@ import * as THREE from "three";
 
 import { defaultVertexShader } from "../util/vertexShaders";
 import { morphFragmentShader } from "../util/fragmentShaders";
+import { slideFragmentShader } from "../util/fragmentShaders";
 
 import "./styles/Page.css";
 
@@ -15,21 +16,87 @@ class Page extends Component {
       viewUpdated: false,
       currentView: 0,
       imageURLs: children.map((child) => child.props.imageURL),
-      images: [],
     };
+
+    this.images = [];
+
+    //Initialize Three.JS variables and constants
+    this.renderer = null;
+    this.scene = null;
+    this.camera = null;
+
+    this.CAMERA_DISTANCE = 0;
+    this.CONTAINER_HEIGHT = 0;
+    this.CONTAINER_WIDTH = 0;
+
+    this.backgroundContainer = null;
+
+    //Event listener
+    this.listener = null;
+    this.clicked = false;
   }
 
-  componentDidMount() {
+  async componentDidMount() {
+    this.init();
+    await this.loadImages();
+    this.attachListener();
+    this.renderBackground();
+  }
+
+  componentDidUpdate() {
     this.renderBackground();
   }
 
   render() {
     return (
       <div className="page">
-        <div className="background-container"></div>
+        <div
+          className="background-container"
+          ref={(elem) => (this.backgroundContainer = elem)}
+        ></div>
         {this.props.children}
       </div>
     );
+  }
+
+  /**
+   * Utility function to initialize Three.js constants and variables
+   */
+  init() {
+    this.CAMERA_DISTANCE = 1000;
+    this.CONTAINER_WIDTH = this.backgroundContainer.clientWidth;
+    this.CONTAINER_HEIGHT = this.backgroundContainer.clientHeight;
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setSize(this.CONTAINER_WIDTH, this.CONTAINER_HEIGHT);
+
+    const FOV =
+      (2 *
+        Math.atan(this.CONTAINER_HEIGHT / (2 * this.CAMERA_DISTANCE)) *
+        180) /
+      Math.PI;
+    this.camera = new THREE.PerspectiveCamera(
+      FOV,
+      this.CONTAINER_WIDTH / this.CONTAINER_HEIGHT,
+      0.1,
+      1000
+    );
+
+    this.camera.position.z = this.CAMERA_DISTANCE;
+    this.scene = new THREE.Scene();
+  }
+
+  attachListener() {
+    document.body.addEventListener(
+      "click",
+      (this.listener = () => {
+        this.clicked = true;
+      })
+    );
+  }
+
+  removeListener() {
+    document.body.removeEventListener("click", this.listener);
   }
 
   /**
@@ -43,12 +110,8 @@ class Page extends Component {
       promises.push(
         new Promise((resolve, reject) => {
           new THREE.TextureLoader().load(url, (image) => {
-            this.setState(
-              {
-                images: [...this.state.images, image],
-              },
-              resolve
-            );
+            this.images[index] = image;
+            resolve();
           });
         })
       );
@@ -59,121 +122,85 @@ class Page extends Component {
     });
   }
 
-  renderBackground() {
-    let clicked = false;
-    document.body.addEventListener("click", () => {
-      clicked = true;
-    });
-    //Set Up and Initialization
-    const CAMERA_DISTANCE = 1000;
+  async renderBackground() {
+    const {
+      CONTAINER_HEIGHT,
+      CONTAINER_WIDTH,
+      camera,
+      scene,
+      renderer,
+      backgroundContainer,
+      images,
+    } = this;
 
-    const container = document.querySelector("div.background-container");
-
-    const CONTAINER_WIDTH = container.clientWidth;
-    const CONTAINER_HEIGHT = container.clientHeight;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(CONTAINER_WIDTH, CONTAINER_HEIGHT);
-
-    const FOV =
-      (2 * Math.atan(CONTAINER_HEIGHT / (2 * CAMERA_DISTANCE)) * 180) / Math.PI;
-    const camera = new THREE.PerspectiveCamera(
-      FOV,
-      CONTAINER_WIDTH / CONTAINER_HEIGHT,
-      0.1,
-      1000
-    );
-    camera.position.z = CAMERA_DISTANCE;
-    const scene = new THREE.Scene();
+    const { currentView } = this.state;
 
     //Geometry
     const geometry = new THREE.PlaneGeometry(CONTAINER_WIDTH, CONTAINER_HEIGHT);
 
     //Material
-    const textures = [];
-
-    const loadImages = (callback) => {
-      const promises = [];
-      const images = [
-        "https://images.pexels.com/photos/2128042/pexels-photo-2128042.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-        "https://images.pexels.com/photos/2603464/pexels-photo-2603464.jpeg?cs=srgb&dl=pexels-aleksandar-pasaric-2603464.jpg&fm=jpg",
-      ];
-      images.forEach((url, i) => {
-        let promise = new Promise((resolve) => {
-          textures[i] = new THREE.TextureLoader().load(url, resolve);
-        });
-        promises.push(promise);
-      });
-
-      Promise.all(promises).then(() => {
-        callback();
-      });
-    };
-
-    const run = () => {
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          u_resolution: {
-            value: new THREE.Vector4(),
-          },
-          u_texture1: {
-            value: textures[0],
-          },
-          u_texture2: {
-            value: textures[1],
-          },
-          u_progress: {
-            value: 0.0,
-            min: 0.0,
-            max: 1.0,
-          },
-          u_intensity: {
-            value: 0.5,
-          },
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        u_resolution: {
+          value: new THREE.Vector4(),
         },
-        vertexShader: defaultVertexShader,
-        fragmentShader: morphFragmentShader,
-      });
+        u_texture1: {
+          value: images[currentView],
+        },
+        u_texture2: {
+          value: images[currentView + 1],
+        },
+        u_progress: {
+          value: 0.0,
+          min: 0.0,
+          max: 1.0,
+        },
+        u_intensity: {
+          value: 50,
+        },
+      },
+      vertexShader: defaultVertexShader,
+      fragmentShader: slideFragmentShader,
+    });
 
-      let imageAspect =
-        material.uniforms.u_texture1.value.image.height /
-        material.uniforms.u_texture1.value.image.width;
-      let a1;
-      let a2;
-      if (CONTAINER_HEIGHT / CONTAINER_WIDTH > imageAspect) {
-        a1 = (CONTAINER_WIDTH / CONTAINER_HEIGHT) * imageAspect;
-        a2 = 1;
-      } else {
-        a1 = 1;
-        a2 = CONTAINER_HEIGHT / CONTAINER_WIDTH / imageAspect;
+    let imageAspect =
+      material.uniforms.u_texture1.value.image.height /
+      material.uniforms.u_texture1.value.image.width;
+    let a1;
+    let a2;
+    if (CONTAINER_HEIGHT / CONTAINER_WIDTH > imageAspect) {
+      a1 = (CONTAINER_WIDTH / CONTAINER_HEIGHT) * imageAspect;
+      a2 = 1;
+    } else {
+      a1 = 1;
+      a2 = CONTAINER_HEIGHT / CONTAINER_WIDTH / imageAspect;
+    }
+
+    material.uniforms.u_resolution.value.x = CONTAINER_WIDTH;
+    material.uniforms.u_resolution.value.y = CONTAINER_HEIGHT;
+    material.uniforms.u_resolution.value.z = a1;
+    material.uniforms.u_resolution.value.w = a2;
+
+    //Mesh
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    backgroundContainer.appendChild(renderer.domElement);
+
+    const renderLoop = () => {
+      let animationFrame = requestAnimationFrame(renderLoop);
+      let progress = mesh.material.uniforms.u_progress.value;
+      if (progress > 1) {
+        console.log(progress);
+        this.clicked = false;
+        cancelAnimationFrame(animationFrame);
+        this.setState({ currentView: currentView + 1 });
       }
-
-      material.uniforms.u_resolution.value.x = CONTAINER_WIDTH;
-      material.uniforms.u_resolution.value.y = CONTAINER_HEIGHT;
-      material.uniforms.u_resolution.value.z = a1;
-      material.uniforms.u_resolution.value.w = a2;
-
-      //Mesh
-      const mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-
-      container.appendChild(renderer.domElement);
-
-      const renderLoop = () => {
-        requestAnimationFrame(renderLoop);
-        let progress = mesh.material.uniforms.u_progress.value;
-        if (progress > 1) {
-          clicked = false;
-          mesh.material.uniforms.u_progress.value = 1;
-        }
-        if (clicked) mesh.material.uniforms.u_progress.value += 0.025;
-        renderer.render(scene, camera);
-      };
-
-      renderLoop();
+      if (this.clicked) mesh.material.uniforms.u_progress.value += 0.025;
+      renderer.render(scene, camera);
     };
 
-    loadImages(run);
+    renderLoop();
   }
 }
 

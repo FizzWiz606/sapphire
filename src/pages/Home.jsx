@@ -15,6 +15,12 @@ class Home extends Component {
         <View imageURL="https://images.pexels.com/photos/2603464/pexels-photo-2603464.jpeg?cs=srgb&dl=pexels-aleksandar-pasaric-2603464.jpg&fm=jpg">
           View 2 Content goes here
         </View>
+        <View imageURL="https://images.pexels.com/photos/2362004/pexels-photo-2362004.jpeg?cs=srgb&dl=pexels-benjamin-suter-2362004.jpg&fm=jpg">
+          View 3 Content goes here
+        </View>
+        <View imageURL="https://images.pexels.com/photos/2128042/pexels-photo-2128042.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500">
+          View 4 Content goes here
+        </View>
       </Page>
     );
   }
