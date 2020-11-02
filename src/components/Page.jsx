@@ -45,6 +45,7 @@ class Page extends Component {
 
   componentDidUpdate() {
     this.renderBackground();
+    console.log(this.state.currentView);
   }
 
   render() {
