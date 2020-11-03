@@ -1,3 +1,70 @@
+@font-face {
+  font-family: "Alpha Slab";
+  src: url("./fonts/alpha_slab.ttf");
+}
+
+@font-face {
+  font-family: "Alata";
+  src: url("./fonts/Alata.ttf");
+}
+
+@font-face {
+  font-family: "NotoSerif";
+  src: url("./fonts/NotoSerif.ttf");
+}
+
+@font-face {
+  font-family: "Staatliches";
+  src: url("./fonts/Staatliches.ttf");
+}
+
+@font-face {
+  font-family: "Dancing Script";
+  src: url("./fonts/DancingScript.ttf");
+}
+
+:root {
+  font-size: 16px;
+  font-family: sans-serif;
+}
+
+@media screen and (min-width: 320px) {
+  :root {
+    font-size: calc(16px + 6 * ((100vw - 320px) / 680));
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  :root {
+    font-size: 22px;
+  }
+}
+
+/* Declare default font-sizes on certain elements: */
+
+h1 {
+  font-size: 2.4rem;
+}
+h2 {
+  font-size: 2.1rem;
+}
+h3 {
+  font-size: 1.8rem;
+}
+h4 {
+  font-size: 1.5rem;
+}
+h5 {
+  font-size: 1.2rem;
+}
+h6 {
+  font-size: 0.9rem;
+}
+
+p {
+  font-size: 1.5rem;
+}
+
 * {
   box-sizing: border-box;
 }

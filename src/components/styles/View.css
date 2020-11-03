@@ -4,8 +4,44 @@ div.view {
   transition: transform 0.25s ease-in-out;
 
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  flex-direction: column;
 
-  color: white;
+  color: #eee;
+
+  padding: 24px;
+  padding-top: 40% !important;
+}
+
+div.view > * {
+  animation: rise 0.5s ease;
+  animation-fill-mode: forwards;
+
+  display: block;
+  width: 80%;
+}
+
+div.view h1,
+div.view h2,
+div.view h3 {
+  margin: 0;
+
+  font-family: "Dancing Script";
+}
+
+div.view h1::first-letter,
+div.view h2::first-letter,
+div.view h3::first-letter {
+  font-family: "Alpha Slab";
+  font-weight: bold;
+}
+
+div.view p {
+  font-family: "Dancing Script";
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(5vh);
+  }
 }
