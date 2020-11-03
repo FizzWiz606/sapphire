@@ -1,7 +1,11 @@
 div.view {
   height: 100%;
 
+  transition: transform 0.25s ease-in-out;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  color: white;
 }

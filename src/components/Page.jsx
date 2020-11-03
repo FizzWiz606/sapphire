@@ -11,13 +11,13 @@ class Page extends Component {
     super(props);
     const children = this.props.children;
 
-    this.state = {
-      viewUpdated: false,
-      currentView: 0,
-      imageURLs: children.map((child) => child.props.imageURL),
-    };
+    this.currentView = 0;
+    this.viewUpdated = false;
+
+    this.page = null;
 
     this.images = [];
+    this.imageURLs = children.map((child) => child.props.imageURL);
 
     //Initialize Three.JS variables and constants
     this.renderer = null;
@@ -32,7 +32,6 @@ class Page extends Component {
 
     //Event listener
     this.listener = null;
-    this.clicked = false;
   }
 
   async componentDidMount() {
@@ -42,13 +41,9 @@ class Page extends Component {
     this.renderBackground();
   }
 
-  componentDidUpdate() {
-    this.renderBackground();
-  }
-
   render() {
     return (
-      <div className="page">
+      <div className="page" ref={(elem) => (this.page = elem)}>
         <div
           className="background-container"
           ref={(elem) => (this.backgroundContainer = elem)}
@@ -89,13 +84,20 @@ class Page extends Component {
     document.body.addEventListener(
       "click",
       (this.listener = () => {
-        this.clicked = true;
+        this.viewUpdated = true;
+        this.updateView();
       })
     );
   }
 
   removeListener() {
     document.body.removeEventListener("click", this.listener);
+  }
+
+  updateView() {
+    if (this.currentView < this.images.length - 1) this.currentView++;
+
+    this.updateVisibleView();
   }
 
   /**
@@ -105,7 +107,7 @@ class Page extends Component {
   loadImages() {
     let promises = [];
 
-    this.state.imageURLs.forEach((url, index) => {
+    this.imageURLs.forEach((url, index) => {
       promises.push(
         new Promise((resolve, reject) => {
           new THREE.TextureLoader().load(url, (image) => {
@@ -121,7 +123,19 @@ class Page extends Component {
     });
   }
 
-  async renderBackground() {
+  /**
+   * Utility function to bring the next View component into view
+   */
+  updateVisibleView() {
+    Array.from(this.page.children)
+      .filter((child) => child.classList.contains("view"))
+      .map(
+        (child) =>
+          (child.style.transform = `translateY(calc(-100vh * ${this.currentView}))`)
+      );
+  }
+
+  renderBackground() {
     const {
       CONTAINER_HEIGHT,
       CONTAINER_WIDTH,
@@ -132,7 +146,7 @@ class Page extends Component {
       images,
     } = this;
 
-    const { currentView } = this.state;
+    const { currentView } = this;
 
     //Geometry
     const geometry = new THREE.PlaneGeometry(CONTAINER_WIDTH, CONTAINER_HEIGHT);
@@ -147,7 +161,12 @@ class Page extends Component {
           value: images[currentView],
         },
         u_texture2: {
-          value: images[currentView + 1],
+          value:
+            images[
+              currentView + 1 > this.images.length - 1
+                ? currentView
+                : currentView + 1
+            ],
         },
         u_progress: {
           value: 0.0,
@@ -188,13 +207,15 @@ class Page extends Component {
 
     const renderLoop = () => {
       let animationFrame = requestAnimationFrame(renderLoop);
-      let progress = mesh.material.uniforms.u_progress.value;
+      let progress = mesh.material.uniforms.u_progress.value; //Initially 0
+
+      if (this.viewUpdated) mesh.material.uniforms.u_progress.value += 0.025;
+
       if (progress > 1) {
-        this.clicked = false;
+        this.viewUpdated = false;
         cancelAnimationFrame(animationFrame);
-        this.setState({ currentView: currentView + 1 });
+        this.renderBackground();
       }
-      if (this.clicked) mesh.material.uniforms.u_progress.value += 0.025;
       renderer.render(scene, camera);
     };
 
