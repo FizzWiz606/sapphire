@@ -15,5 +15,11 @@ nav {
 
 nav a {
   text-decoration: none;
+  color: var(--text-primary) !important;
   font-family: "Staatliches";
+}
+
+nav a.current {
+  color: #eee !important;
+  text-shadow: 0px 4px 4px rgba(229, 229, 229, 0.5);
 }

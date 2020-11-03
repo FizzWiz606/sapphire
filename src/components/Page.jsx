@@ -11,13 +11,17 @@ class Page extends Component {
     super(props);
     const children = this.props.children;
 
+    console.log(children);
+
     this.currentView = 0;
     this.viewUpdated = false;
 
     this.page = null;
 
     this.images = [];
-    this.imageURLs = children.map((child) => child.props.imageURL);
+    this.imageURLs = Array.from(children)
+      .filter((child) => child.type.name === "View")
+      .map((child) => child.props.imageURL);
 
     //Initialize Three.JS variables and constants
     this.renderer = null;
